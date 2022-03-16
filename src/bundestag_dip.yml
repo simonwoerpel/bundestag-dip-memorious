@@ -1,0 +1,104 @@
+name: bundestag_dip
+description: 'Dokumentations- und Informationssystem für Parlamentsmaterialien (DIP)'
+stealthy: true
+
+
+pipeline:
+  init:
+    method: bundestag_dip:init
+    params:
+      url: https://search.dip.bundestag.de/api/v1/drucksache?apikey=N64VhW8.yChkBUIJeosGojQ7CSR2xwLf3Qy7Apw464
+      timedelta:
+        days: 1
+    handle:
+      pass: fetch
+
+  fetch:
+    method: fetch
+    handle:
+      pass: parse
+
+  parse:
+    method: bundestag_dip:parse
+    handle:
+      cursor: fetch
+      download: download
+
+  download:
+    method: fetch
+    handle:
+      pass: folders
+
+  folders:
+    method: bundestag_dip:folders
+    params:
+      collection: de_bundestag_dip
+    handle:
+      pass: store
+
+  store:
+    method: memorious.operations.aleph:aleph_emit_document
+    params:
+      collection: de_bundestag_dip
+    handle:
+      pass: enrich
+
+  enrich:
+    method: bundestag_dip:enrich
+    params:
+      mapping:
+        entities:
+          body:
+            schema: PublicBody
+            key_literal: body
+            key: body_name
+            properties:
+              name:
+                column: body_name
+                required: true
+              country:
+                literal: de
+          author:
+            schema: Person
+            key_literal: author
+            key: person_id
+            properties:
+              name:
+                column: person_name
+                required: true
+              country:
+                literal: de
+              summary:
+                column: summary
+          bodylink:
+            schema: Documentation
+            key_literal: body-link
+            keys:
+              - body_name
+              - document_id
+            properties:
+              document:
+                column: document_id
+              entity:
+                entity: body
+                required: true
+              role:
+                column: role
+              date:
+                column: date
+          authorlink:
+            schema: Documentation
+            key_literal: author-link
+            keys:
+              - person_id
+              - document_id
+            properties:
+              document:
+                column: document_id
+              entity:
+                entity: author
+                required: true
+              role:
+                literal: author
+              date:
+                column: date

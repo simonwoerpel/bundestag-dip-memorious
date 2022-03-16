@@ -1,0 +1,62 @@
+name: bundestag_dip
+
+on:
+  workflow_dispatch:
+    inputs:
+      full_run:
+        description: "Run full without any dates facet"
+        type: boolean
+        default: false
+        required: true
+      start_date:
+        description: "Start scraping from this date (isoformat)"
+        type: string
+  schedule:
+    - cron: "0 5 * * *"
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    env:
+      ARCHIVE_TYPE: s3
+      ARCHIVE_BUCKET: ${{ secrets.ARCHIVE_BUCKET }}
+      ARCHIVE_ENDPOINT_URL: ${{ secrets.ARCHIVE_ENDPOINT_URL }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: eu-central-1
+      AWS_DEFAULT_REGION: eu-central-1
+      MEMORIOUS_CONFIG_PATH: src
+      MEMORIOUS_HTTP_TIMEOUT: 60
+      MEMORIOUS_CONTINUE_ON_ERROR: 1
+      MEMORIOUS_DATASTORE_URI: ${{ secrets.MEMORIOUS_DATASTORE_URI }}
+      REDIS_URL: redis://localhost:6379/0
+      ALEPHCLIENT_HOST: ${{ secrets.ALEPHCLIENT_HOST }}
+      ALEPHCLIENT_API_KEY: ${{ secrets.ALEPHCLIENT_API_KEY }}
+      START_DATE: ${{ github.event.inputs.start_date }}
+      FULL_RUN: ${{ github.event.inputs.full_run }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get install -y -qq libicu-dev libpq-dev
+          pip install --no-cache-dir -q -e .
+      - name: Run crawler
+        run: memorious run bundestag_dip
