@@ -57,6 +57,7 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get install -y -qq libicu-dev libpq-dev
+          pip install --no-cache-dir -q psycopg2
           pip install --no-cache-dir -q -e .
       - name: Run crawler
         run: memorious run bundestag_dip
