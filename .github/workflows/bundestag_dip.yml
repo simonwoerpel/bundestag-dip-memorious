@@ -60,4 +60,4 @@ jobs:
           pip install --no-cache-dir -q psycopg2
           pip install --no-cache-dir -q -e .
       - name: Run crawler
-        run: memorious run bundestag_dip
+        run: memorious run bundestag_dip --threads=4
