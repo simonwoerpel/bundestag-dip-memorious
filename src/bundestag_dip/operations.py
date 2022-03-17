@@ -16,9 +16,9 @@ from .util import aleph_folder
 def init(context, data):
     f = furl(context.params["url"])
     if not env.to_bool("FULL_RUN"):
-        start_date = env.get("START_DATE") or datetime.now() - timedelta(
+        start_date = env.get("START_DATE") or (datetime.now() - timedelta(
             **ensure_dict(context.params.get("timedelta"))
-        ).date().isoformat()
+        )).date().isoformat()
         f.args["f.datum.start"] = start_date
     data["url"] = f.url
     context.emit(data=data)
