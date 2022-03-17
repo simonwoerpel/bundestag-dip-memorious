@@ -9,7 +9,7 @@ pipeline:
     params:
       url: https://search.dip.bundestag.de/api/v1/drucksache?apikey=N64VhW8.yChkBUIJeosGojQ7CSR2xwLf3Qy7Apw464
       timedelta:
-        days: 1
+        days: 7
     handle:
       pass: fetch
 
